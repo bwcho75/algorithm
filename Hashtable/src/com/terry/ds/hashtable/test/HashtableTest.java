@@ -13,7 +13,7 @@ public class HashtableTest {
 
 	@Test
 	public void testGet() {
-		Hashtable hash = new HashtableImpl(10);
+		Hashtable hash = new HashtableImpl(5);
 
 		hash.put("terry", "daddy");
 		hash.put("cath", "mom");

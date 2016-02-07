@@ -4,7 +4,7 @@ import java.util.NoSuchElementException;
 
 public class HashtableImpl<Item> implements Hashtable<Item> {
 
-	static boolean DEBUG = false;
+	static boolean DEBUG = true;
 
 	void debug(String str) {
 		if (DEBUG)
@@ -23,20 +23,27 @@ public class HashtableImpl<Item> implements Hashtable<Item> {
 	}
 
 	@Override
-	public void put(String key, Item value) {
+	public void put(String key,Item value){
+		put(key,value,false,this.bucket);
+	}
+	public void put(String key, Item value,boolean resize,Node[] bucket) {
 		// put value into key
-
+		
+		//bucket = this.bucket;
+		if(nofnode>size) return;
 		Node node = new Node(key, value);
 		Node pos_node = null;
 
 		debug(".put(" + key + ") index is " + hash(key) % size);
-		try {
-			// 해당키에 대해서 이미 값이 있는지 없는지를 확인
-			pos_node = getNode(key);
-		} catch (NoSuchElementException ne) {
-			// 만약에, 해당 키로 값이 없는 경우
-			debug(".put(" + key + ") is not exist");
-			pos_node = null;
+		if(!resize){
+			try {
+				// 해당키에 대해서 이미 값이 있는지 없는지를 확인
+				pos_node = getNode(key);
+			} catch (NoSuchElementException ne) {
+				// 만약에, 해당 키로 값이 없는 경우
+				debug(".put(" + key + ") is not exist");
+				pos_node = null;
+			}
 		}
 
 		if (pos_node == null) {
@@ -62,6 +69,14 @@ public class HashtableImpl<Item> implements Hashtable<Item> {
 		} else {
 			// 해당 키에 대한 값이 이미 있을 경우, 값만 업데이트 한다.
 			pos_node.setValue(value);
+		}
+		debug("size :"+size+" nofnode:"+nofnode);
+		// 만약에 bucket 사이즈가 THRESOLD를 넘어가면 bucket를 두배 사이즈로 다시 만든다.
+		if(nofnode > size*this.THRESOLD/100 && !resize) {
+			
+			debug("nofnode :"+nofnode);
+			debug("threadhold :"+size*this.THRESOLD/100);
+			resize(2);
 		}
 
 	}
@@ -138,8 +153,21 @@ public class HashtableImpl<Item> implements Hashtable<Item> {
 		return hash;
 	}
 
-	private void resize() {
-		Node<Item> new_bucket[] = new Node[size * 2];
+	private void resize(int w) {
+		Node<Item> new_bucket[] = new Node[size * w];
+		size = size * w;
+		for(int i=0;i<bucket.length;i++){
+			Node head = bucket[i];
+			Node cursor = head;
+			while(cursor != null) {
+				String key = cursor.getKey();
+				Item value = (Item) cursor.getValue();
+				debug(".resize copying key "+key);
+				put(key,value,true,new_bucket);
+				cursor = cursor.getNext();
+			}// while
+		}
+		bucket = new_bucket;
 	}
 
 }
